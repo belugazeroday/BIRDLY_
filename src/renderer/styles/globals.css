@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-birdly-bg text-birdly-text;
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(99, 102, 241, 0.14) 0%, transparent 32%),
+      radial-gradient(circle at 80% 12%, rgba(124, 58, 237, 0.14) 0%, transparent 34%);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable='true'] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-birdly-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-birdly-muted;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(19, 19, 26, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(124, 58, 237, 0.15);
+  }
+
+  .glass-overlay {
+    background: rgba(10, 10, 15, 0.82);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(124, 58, 237, 0.1) inset;
+  }
+
+  .btn-primary {
+    @apply bg-birdly-accent hover:bg-purple-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-birdly-accent focus:ring-offset-2 focus:ring-offset-birdly-bg;
+    @apply active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply text-birdly-text-dim hover:text-birdly-text hover:bg-birdly-border px-3 py-2 rounded-lg transition-all duration-200;
+    @apply focus:outline-none focus:ring-1 focus:ring-birdly-border;
+  }
+
+  .btn-danger {
+    @apply bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  .badge {
+    @apply text-xs font-medium px-2 py-0.5 rounded-full;
+  }
+
+  .badge-accent {
+    @apply badge bg-birdly-accent/20 text-birdly-accent-light border border-birdly-accent/30;
+  }
+
+  .badge-success {
+    @apply badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-500/20 text-amber-400 border border-amber-500/30;
+  }
+
+  .input {
+    @apply bg-birdly-surface border border-birdly-border text-birdly-text placeholder-birdly-muted;
+    @apply rounded-lg px-3 py-2 text-sm w-full;
+    @apply focus:outline-none focus:ring-1 focus:ring-birdly-accent focus:border-birdly-accent;
+    @apply transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-birdly-surface border border-birdly-border rounded-xl p-4;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .section-title {
+    @apply text-xs font-semibold uppercase tracking-widest text-birdly-muted mb-3;
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+  }
+
+  .titlebar {
+    -webkit-app-region: drag;
+  }
+
+  .titlebar-no-drag {
+    -webkit-app-region: no-drag;
+  }
+
+  .widget-drag-handle {
+    -webkit-app-region: drag;
+  }
+
+  .widget-no-drag {
+    -webkit-app-region: no-drag;
+  }
+
+  .suggestion-card {
+    @apply animate-slide-up;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(19, 19, 26, 0.95) 100%);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    @apply rounded-xl p-3;
+  }
+
+  .live-dot {
+    @apply w-2 h-2 rounded-full bg-red-500;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+    animation: livePulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+}

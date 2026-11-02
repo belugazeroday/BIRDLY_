@@ -48,7 +48,7 @@ export default function KnowledgeBase() {
     }
   }, [refreshContext])
 
-  const uploadKnowledgeFile = async (filePath: string) => {
+  const uploadKnowledgeFile = useCallback(async (filePath: string) => {
     setIsUploading(true)
     const name = filePath.split(/[/\\]/).pop() ?? filePath
     setUploadStatus(`Processing ${name}...`)
@@ -62,7 +62,7 @@ export default function KnowledgeBase() {
       setIsUploading(false)
       setTimeout(() => setUploadStatus(''), 3000)
     }
-  }
+  }, [refreshContext])
 
   const uploadResume = async (filePath: string) => {
     const result = await window.birdly.uploadResume(filePath)
@@ -98,7 +98,7 @@ export default function KnowledgeBase() {
       const filePath = (file as { path?: string }).path
       if (filePath) await uploadKnowledgeFile(filePath)
     }
-  }, [])
+  }, [uploadKnowledgeFile])
 
   return (
     <div className="p-6 max-w-3xl mx-auto flex flex-col gap-5">

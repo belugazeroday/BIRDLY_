@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useMicCapture } from '../lib/useMicCapture'
 
 type WidgetTab = 'chat' | 'transcript'
 type WidgetToast = { tone?: 'success' | 'info' | 'error'; message: string }
@@ -42,6 +43,8 @@ export default function FloatingWidget() {
   const [resumeFileName, setResumeFileName] = useState('')
   const [toast, setToast] = useState<WidgetToast | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useMicCapture(sessionActive, (pcm) => window.birdly.sendAudioChunk(pcm))
 
   const hotkeyLabel = useMemo(
     () => (window.birdly?.platform === 'darwin' ? 'Cmd + \\' : 'Ctrl + \\'),
@@ -166,7 +169,7 @@ export default function FloatingWidget() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [interactionEnabled])
 
-  const runQuickAction = async (action: QuickCoachAction, customText?: string) => {
+  async function runQuickAction(action: QuickCoachAction, customText?: string) {
     setIsActionLoading(true)
     setCurrentChunk('')
     setIsStreaming(false)

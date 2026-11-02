@@ -5,7 +5,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![Electron](https://img.shields.io/badge/Electron-31-blue)](https://electronjs.org)
-[![React](https://img.shields.io/badge/React-18-61dafb)](https://reactjs.org)
+[![React](https://img.shields.io/badge/React-19-61dafb)](https://reactjs.org)
 
 ---
 
@@ -118,7 +118,7 @@ Output is in the `release/` directory.
 5. The stealth overlay appears on-screen (invisible to meeting participants)
 6. Speak naturally — Birdly transcribes and generates coaching suggestions in real-time
 
-### 🛡 Floating Widget Controls & Resume Upload (v2.0.9)
+### 🛡 Floating Widget Controls & Resume Upload (v1.0.0)
 
 Birdly now ships with a Cluely-style floating widget that stays always-on-top, remains hidden from common screen-share tools, and only becomes mouse-interactive when you intentionally unlock it.
 

@@ -2,6 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { app } from 'electron'
 import Tesseract from 'tesseract.js'
+import { getTesseractOptions } from './tessdata'
 
 export type DocumentKind = 'knowledge' | 'resume'
 
@@ -83,7 +84,7 @@ export class RAGService {
     options: { kind?: DocumentKind; name?: string } = {}
   ): Promise<KBDocument> {
     const ext = path.extname(filePath).toLowerCase()
-    let text = ''
+    let text: string
 
     if (ext === '.txt' || ext === '.md') {
       text = fs.readFileSync(filePath, 'utf-8')
@@ -152,7 +153,10 @@ export class RAGService {
 
   private async extractImageText(filePath: string): Promise<string> {
     if (!this.ocrWorker) {
-      this.ocrWorker = await Tesseract.createWorker('eng', 1, { logger: () => {} })
+      this.ocrWorker = await Tesseract.createWorker('eng', 1, {
+        logger: () => {},
+        ...getTesseractOptions(),
+      })
     }
     const result = await this.ocrWorker.recognize(filePath)
     return result.data.text?.trim() ?? ''

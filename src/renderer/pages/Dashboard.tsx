@@ -19,8 +19,6 @@ export default function Dashboard() {
   const [firstTranscriptLatencyMs, setFirstTranscriptLatencyMs] = useState<number | null>(null)
   const [isCaptureRunning, setIsCaptureRunning] = useState(false)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const captureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     // Load models
@@ -78,26 +76,8 @@ export default function Dashboard() {
     setTranscript([])
     setSuggestions([])
 
-    // Start mic capture (MediaRecorder → send PCM to main)
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = createRecorder(stream)
-      mediaRecorderRef.current = recorder
-      recorder.start(3000) // 3s chunks
-      recorder.ondataavailable = async (e) => {
-        if (e.data.size > 0) {
-          const pcm = await convertBlobToMono16kPcm(e.data)
-          if (pcm.length > 0) {
-            window.birdly?.sendAudioChunk(pcm)
-          }
-        }
-      }
-    } catch (err) {
-      console.error('[Dashboard] Mic error:', err)
-      setPipelineError(`Microphone error: ${(err as Error).message}`)
-    }
-
-    // Manual UI status: OCR loop is handled in main process settings.
+    // Microphone capture runs in the always-on overlay renderer.
+    // OCR capture is handled by the main process settings.
     setIsCaptureRunning(true)
 
   }, [])
@@ -106,13 +86,6 @@ export default function Dashboard() {
     await window.birdly?.stopSession()
     setSessionActive(false)
     setIsCaptureRunning(false)
-
-    mediaRecorderRef.current?.stop()
-    mediaRecorderRef.current?.stream?.getTracks().forEach((t) => t.stop())
-    mediaRecorderRef.current = null
-
-    if (captureIntervalRef.current) clearInterval(captureIntervalRef.current)
-    captureIntervalRef.current = null
   }, [])
 
   const handleModelChange = (model: string) => {
@@ -264,52 +237,3 @@ export default function Dashboard() {
   )
 }
 
-async function convertBlobToMono16kPcm(blob: Blob): Promise<number[]> {
-  const arrayBuffer = await blob.arrayBuffer()
-  const ctx = new AudioContext()
-  try {
-    const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0))
-    const channelData = audioBuffer.numberOfChannels > 1
-      ? mixToMono(audioBuffer)
-      : audioBuffer.getChannelData(0)
-    const resampled = resampleLinear(channelData, audioBuffer.sampleRate, 16000)
-    return Array.from(resampled)
-  } catch {
-    return []
-  } finally {
-    await ctx.close()
-  }
-}
-
-function mixToMono(audioBuffer: AudioBuffer): Float32Array {
-  const length = audioBuffer.length
-  const mixed = new Float32Array(length)
-  for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
-    const data = audioBuffer.getChannelData(channel)
-    for (let i = 0; i < length; i++) {
-      mixed[i] += data[i] / audioBuffer.numberOfChannels
-    }
-  }
-  return mixed
-}
-
-function resampleLinear(input: Float32Array, sourceRate: number, targetRate: number): Float32Array {
-  if (sourceRate === targetRate) return input
-  const ratio = sourceRate / targetRate
-  const newLength = Math.max(1, Math.floor(input.length / ratio))
-  const output = new Float32Array(newLength)
-  for (let i = 0; i < newLength; i++) {
-    const srcIndex = i * ratio
-    const left = Math.floor(srcIndex)
-    const right = Math.min(left + 1, input.length - 1)
-    const t = srcIndex - left
-    output[i] = input[left] * (1 - t) + input[right] * t
-  }
-  return output
-}
-
-function createRecorder(stream: MediaStream): MediaRecorder {
-  const preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg']
-  const mimeType = preferred.find((type) => MediaRecorder.isTypeSupported(type))
-  return mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
-}

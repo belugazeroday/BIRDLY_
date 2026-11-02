@@ -1,8 +1,14 @@
 import { EventEmitter } from 'events'
 import { app } from 'electron'
 import path from 'path'
-import fs from 'fs'
-import os from 'os'
+
+type TransformersModule = typeof import('@xenova/transformers')
+
+// @xenova/transformers is ESM-only. TypeScript would downlevel `import()` to
+// require() in this CommonJS build, so use the native dynamic import instead.
+const loadTransformers = new Function(
+  'return import("@xenova/transformers")'
+) as () => Promise<TransformersModule>
 
 // Speech-To-Text using Xenova Whisper (runs in a child worker to avoid blocking main process)
 // Due to Electron's architecture, we use a lightweight approach:
@@ -74,8 +80,7 @@ export class STTService extends EventEmitter {
 
   private async getPipeline() {
     if (this.pipeline) return this.pipeline
-    // @ts-ignore
-    const { pipeline, env } = await import('@xenova/transformers')
+    const { pipeline, env } = await loadTransformers()
 
     // Cache models in userData dir
     env.cacheDir = path.join(app.getPath('userData'), 'models')

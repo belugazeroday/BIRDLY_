@@ -1,4 +1,5 @@
 import Tesseract from 'tesseract.js'
+import { getTesseractOptions } from './tessdata'
 
 export class OCRService {
   private worker: Tesseract.Worker | null = null
@@ -7,6 +8,7 @@ export class OCRService {
     if (this.worker) return
     this.worker = await Tesseract.createWorker('eng', 1, {
       logger: () => {}, // Silence logger
+      ...getTesseractOptions(),
     })
   }
 

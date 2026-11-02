@@ -11,13 +11,23 @@ import {
 } from 'electron'
 import path from 'path'
 import fs from 'fs'
+import { pathToFileURL } from 'url'
 import { setupIpcHandlers } from './ipcHandlers'
 import { SettingsStore } from './settings'
 
 const isDev = process.env.NODE_ENV === 'development'
 const OVERLAY_INTERACTION_MS = 3000
 const OVERLAY_HANDLE_HEIGHT_PX = 28
-const START_INTERACTIVE = true
+const START_INTERACTIVE = false
+
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer')
+  app.commandLine.appendSwitch('ozone-platform-hint', 'auto')
+}
+
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.birdly.app')
+}
 
 let mainWindow: BrowserWindow | null = null
 let overlayWindow: BrowserWindow | null = null
@@ -54,7 +64,7 @@ function getRendererPageUrl(page: 'index' | 'overlay') {
     return `http://localhost:5173/${page}.html`
   }
 
-  return `file://${path.join(__dirname, '../../dist', `${page}.html`)}`
+  return pathToFileURL(path.join(__dirname, '../../dist', `${page}.html`)).toString()
 }
 
 function scheduleOverlayBoundsPersistence() {
@@ -160,7 +170,7 @@ function createMainWindow() {
     minHeight: 600,
     backgroundColor: '#0a0a0f',
     frame: false,
-    vibrancy: 'sidebar',
+    ...(process.platform === 'darwin' ? { vibrancy: 'sidebar' as const } : {}),
     webPreferences: {
       preload: getPreloadPath(),
       contextIsolation: true,
@@ -199,10 +209,12 @@ function createOverlayWindow() {
   const overlayHeight = Math.max(420, Math.round(settings.overlayHeight || 520))
   const centeredX = Math.round(workArea.x + workArea.width / 2 - overlayWidth / 2)
   const centeredY = workArea.y + 36
-  const startX = settings.overlayX >= 0
+  const hasSavedX = Number.isFinite(settings.overlayX) && settings.overlayX !== -1
+  const hasSavedY = Number.isFinite(settings.overlayY) && settings.overlayY !== -1
+  const startX = hasSavedX
     ? clamp(settings.overlayX, workArea.x, workArea.x + workArea.width - overlayWidth)
     : centeredX
-  const startY = settings.overlayY >= 0
+  const startY = hasSavedY
     ? clamp(settings.overlayY, workArea.y, workArea.y + workArea.height - overlayHeight)
     : centeredY
 
@@ -220,7 +232,7 @@ function createOverlayWindow() {
     focusable: false,
     resizable: true,
     hasShadow: false,
-    type: 'panel',
+    ...(process.platform === 'darwin' ? { type: 'panel' as const } : {}),
     webPreferences: {
       preload: getPreloadPath(),
       contextIsolation: true,
@@ -264,7 +276,8 @@ function createOverlayWindow() {
 // SYSTEM TRAY
 // ─────────────────────────────────────────────
 function createTray() {
-  const iconPath = path.join(__dirname, '../../assets/icon.png')
+  const iconFile = process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+  const iconPath = path.join(__dirname, '../../assets', iconFile)
   const icon = fs.existsSync(iconPath)
     ? nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
     : nativeImage.createEmpty()
@@ -435,7 +448,14 @@ app.on('will-quit', () => {
 
 app.on('web-contents-created', (_e, contents) => {
   contents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url)
+    try {
+      const { protocol } = new URL(url)
+      if (protocol === 'http:' || protocol === 'https:') {
+        void shell.openExternal(url)
+      }
+    } catch {
+      // Ignore malformed URLs
+    }
     return { action: 'deny' }
   })
 })
